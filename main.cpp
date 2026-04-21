@@ -49,7 +49,7 @@ void displayMenu();
 // =============================
 
 int main() {
-    // your code here
+    initializeHashTable();
     return 0;
 }
 
@@ -58,15 +58,57 @@ int main() {
 // =============================
 
 void initializeHashTable() {
-    // your code here
+    for (int i = 0; i < MAX_TASKS; i++) {
+        idIndexMap[i] = -1;
+    }
 }
 
 // =============================
 // CORE FUNCTIONS
 // =============================
 
+// Add a new task with validation and store in array
 void addTask() {
-    // your code here
+    // Check if array is full
+    if (taskCount >= MAX_TASKS) {
+        cout << "Error: Task list is full (maximum 100 tasks)." << endl;
+        return;
+    }
+
+    Task newTask;
+
+    // Get user input
+    cout << "Enter task ID: ";
+    cin >> newTask.id;
+    cin.ignore();
+
+    cout << "Enter task title: ";
+    getline(cin, newTask.title);
+
+    cout << "Enter task description: ";
+    getline(cin, newTask.description);
+
+    cout << "Enter priority (1=Low, 2=Medium, 3=High): ";
+    cin >> newTask.priority;
+
+    // Validate duplicate ID
+    if (idIndexMap[newTask.id] != -1) {
+        cout << "Error: Task ID already exists." << endl;
+        return;
+    }
+
+    // Validate priority range
+    if (newTask.priority < 1 || newTask.priority > 3) {
+        cout << "Error: Priority must be 1, 2, or 3." << endl;
+        return;
+    }
+
+    // Store task and update hash table
+    tasks[taskCount] = newTask;
+    idIndexMap[newTask.id] = taskCount;
+    taskCount++;
+
+    cout << "Task added successfully!" << endl;
 }
 
 void editTask() {
