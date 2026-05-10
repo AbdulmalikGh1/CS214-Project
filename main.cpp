@@ -15,33 +15,39 @@ struct Task {
 };
 
 // =============================
-// MAIN DATA STRUCTURES
+// TASK MANAGER
 // =============================
 
-// 1) Array for storing all tasks
-const int MAX_TASKS = 100;
-Task tasks[MAX_TASKS];
-int taskCount = 0;
+class TaskManager {
+private:
+    static const int MAX_TASKS = 100;
 
-// 2) Manual Stack for deleted tasks
-Task deletedTasks[MAX_TASKS];
-int top = -1;
+    // 1) Array for storing all tasks
+    Task tasks[MAX_TASKS];
+    int taskCount;
 
-// 3) Manual Hash Table for ID -> index
-int idIndexMap[MAX_TASKS];
+    // 2) Manual Stack for deleted tasks
+    Task deletedTasks[MAX_TASKS];
+    int top;
 
-// =============================
-// FUNCTION DECLARATIONS
-// =============================
+    // 3) Manual Hash Table / direct ID-to-index map
+    int idIndexMap[MAX_TASKS];
 
-void initializeHashTable();
-void addTask();
-void editTask();
-void deleteTask();
-void searchTask();
-void displayTasks();
-void printTasksToFile();
-void loadTasksFromFile();
+    void initializeHashTable();
+    void rebuildIdIndexMap();
+
+public:
+    TaskManager();
+    void addTask();
+    void editTask();
+    void deleteTask();
+    void searchTask();
+    void displayTasks();
+    void printTasksToFile();
+    void loadTasksFromFile();
+    void saveTasksToFile();
+};
+
 void displayMenu();
 
 // =============================
@@ -49,8 +55,8 @@ void displayMenu();
 // =============================
 
 int main() {
-    initializeHashTable();
-    loadTasksFromFile();
+    TaskManager taskManager;
+    taskManager.loadTasksFromFile();
 
     int choice;
 
@@ -60,38 +66,27 @@ int main() {
 
         switch (choice) {
             case 1:
-                addTask();
+                taskManager.addTask();
                 break;
             case 2:
-                editTask();
+                taskManager.editTask();
                 break;
             case 3:
-                deleteTask();
+                taskManager.deleteTask();
                 break;
             case 4:
-                searchTask();
+                taskManager.searchTask();
                 break;
             case 5:
-                displayTasks();
+                taskManager.displayTasks();
                 break;
             case 6:
-                printTasksToFile();
+                taskManager.printTasksToFile();
                 break;
-            case 7: {
-                ofstream saveFile("tasks.txt");
-                if (saveFile) {
-                    saveFile << taskCount << endl;
-                    for (int i = 0; i < taskCount; i++) {
-                        saveFile << tasks[i].id << endl;
-                        saveFile << tasks[i].title << endl;
-                        saveFile << tasks[i].description << endl;
-                        saveFile << tasks[i].priority << endl;
-                    }
-                    saveFile.close();
-                }
+            case 7:
+                taskManager.saveTasksToFile();
                 cout << "Exiting program..." << endl;
                 break;
-            }
             default:
                 cout << "Invalid choice!" << endl;
         }
@@ -105,9 +100,22 @@ int main() {
 // HASH TABLE
 // =============================
 
-void initializeHashTable() {
+TaskManager::TaskManager() {
+    taskCount = 0;
+    top = -1;
+    initializeHashTable();
+}
+
+void TaskManager::initializeHashTable() {
     for (int i = 0; i < MAX_TASKS; i++) {
         idIndexMap[i] = -1;
+    }
+}
+
+void TaskManager::rebuildIdIndexMap() {
+    initializeHashTable();
+    for (int i = 0; i < taskCount; i++) {
+        idIndexMap[tasks[i].id] = i;
     }
 }
 
@@ -115,7 +123,8 @@ void initializeHashTable() {
 // CORE FUNCTIONS
 // =============================
 
-void addTask() {
+// Add a new task with validation and store in array
+void TaskManager::addTask() {
     if (taskCount >= MAX_TASKS) {
         cout << "Task list is full." << endl;
         return;
@@ -154,7 +163,7 @@ void addTask() {
     cout << "Task added successfully." << endl;
 }
 
-void editTask() {
+void TaskManager::editTask() {
     int id;
     cout << "Enter task ID to edit: ";
     cin >> id;
@@ -180,7 +189,7 @@ void editTask() {
     cout << "Task updated successfully." << endl;
 }
 
-void deleteTask() {
+void TaskManager::deleteTask() {
     int id;
     cout << "Enter task ID to delete: ";
     cin >> id;
@@ -203,15 +212,12 @@ void deleteTask() {
 
     taskCount--;
 
-    initializeHashTable();
-    for (int i = 0; i < taskCount; i++) {
-        idIndexMap[tasks[i].id] = i;
-    }
+    rebuildIdIndexMap();
 
     cout << "Task deleted successfully." << endl;
 }
 
-void searchTask() {
+void TaskManager::searchTask() {
     int id;
     cout << "Enter task ID to search: ";
     cin >> id;
@@ -230,7 +236,7 @@ void searchTask() {
     cout << "Priority: " << tasks[index].priority << endl;
 }
 
-void displayTasks() {
+void TaskManager::displayTasks() {
     if (taskCount == 0) {
         cout << "No tasks available." << endl;
         return;
@@ -248,7 +254,7 @@ void displayTasks() {
     }
 }
 
-void printTasksToFile() {
+void TaskManager::printTasksToFile() {
     ofstream outFile("output.txt");
 
     if (!outFile) {
@@ -271,7 +277,7 @@ void printTasksToFile() {
     cout << "Tasks printed to output.txt successfully." << endl;
 }
 
-void loadTasksFromFile() {
+void TaskManager::loadTasksFromFile() {
     ifstream inFile("tasks.txt");
 
     if (!inFile) {
@@ -292,9 +298,21 @@ void loadTasksFromFile() {
 
     inFile.close();
 
-    initializeHashTable();
-    for (int i = 0; i < taskCount; i++) {
-        idIndexMap[tasks[i].id] = i;
+    rebuildIdIndexMap();
+}
+
+void TaskManager::saveTasksToFile() {
+    ofstream saveFile("tasks.txt");
+
+    if (saveFile) {
+        saveFile << taskCount << endl;
+        for (int i = 0; i < taskCount; i++) {
+            saveFile << tasks[i].id << endl;
+            saveFile << tasks[i].title << endl;
+            saveFile << tasks[i].description << endl;
+            saveFile << tasks[i].priority << endl;
+        }
+        saveFile.close();
     }
 }
 
